@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KNN Idiomas · Goiânia Eldorado 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  /* ── PALETA KNN OFICIAL ──
+     Retirada diretamente do logo:
+     Roxo escuro  #6b1f7c
+     Rosa/magenta #c4186a
+     Vermelho     #e8203a
+     Gradiente principal: roxo → rosa → vermelho (diagonal)
+  */
+  :root {
+    --knn1: #6b1f7c;   /* roxo escuro */
+    --knn2: #c4186a;   /* rosa/magenta */
+    --knn3: #e8203a;   /* vermelho */
+    --grad: linear-gradient(135deg, #6b1f7c 0%, #c4186a 55%, #e8203a 100%);
+    --grad-h: linear-gradient(135deg, #7d2491 0%, #d41e78 55%, #f02040 100%);
+    --white: #ffffff;
+    --off-white: #faf8fc;   /* branco com leve toque lilás */
+    --light: #f3eef8;       /* lilás muito claro para fundos alternados */
+    --gray: #6e6e7a;
+    --dark: #18101e;        /* quase preto com tom roxo */
+    --WA: #25d366;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'Montserrat',sans-serif; background:var(--white); color:var(--dark); overflow-x:hidden; }
+
+  /* ── NAV ── */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 6%;
+    background:rgba(255,255,255,.97);
+    backdrop-filter:blur(12px);
+    border-bottom:3px solid transparent;
+    border-image: var(--grad) 1;
+    box-shadow:0 2px 24px rgba(107,31,124,.12);
+  }
+  .logo svg { height:44px; width:auto; display:block; }
+  .nav-links { display:flex; gap:26px; list-style:none; }
+  .nav-links a {
+    text-decoration:none; font-size:13px; font-weight:700;
+    color:var(--dark); letter-spacing:.5px; transition:color .2s;
+  }
+  .nav-links a:hover { color:var(--knn2); }
+  .nav-cta {
+    background:var(--grad); color:#fff; border:none;
+    padding:10px 22px; border-radius:50px; font-family:inherit;
+    font-weight:700; font-size:13px; cursor:pointer; transition:all .2s;
+    text-decoration:none; letter-spacing:.4px;
+    box-shadow:0 4px 16px rgba(196,24,106,.35);
+  }
+  .nav-cta:hover { background:var(--grad-h); transform:translateY(-1px); box-shadow:0 6px 22px rgba(196,24,106,.45); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height:100vh;
+    display:grid; grid-template-columns:1fr 1fr;
+    align-items:stretch;
+    padding-top:68px;
+  }
+  .hero-left {
+    background:var(--grad);
+    display:flex; flex-direction:column; justify-content:center;
+    padding:70px 8% 70px 6%;
+    position:relative; overflow:hidden;
+  }
+  .hero-left::after {
+    content:'';
+    position:absolute; bottom:-70px; right:-70px;
+    width:240px; height:240px; border-radius:50%;
+    border:50px solid rgba(255,255,255,.09);
+  }
+  .hero-left::before {
+    content:'';
+    position:absolute; top:-50px; left:-50px;
+    width:160px; height:160px; border-radius:50%;
+    border:35px solid rgba(255,255,255,.07);
+  }
+  .badge {
+    display:inline-flex; align-items:center; gap:7px;
+    background:rgba(255,255,255,.2); color:#fff;
+    padding:6px 14px; border-radius:50px;
+    font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    margin-bottom:28px; width:fit-content;
+    border:1px solid rgba(255,255,255,.3);
+  }
+  h1 {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(38px,4.8vw,60px);
+    line-height:1.06; color:var(--white);
+    margin-bottom:20px;
+  }
+  h1 em {
+    font-style:normal;
+    text-decoration:underline; text-underline-offset:6px;
+    text-decoration-thickness:3px; text-decoration-color:rgba(255,255,255,.45);
+  }
+  .hero-left p {
+    font-size:16px; line-height:1.72;
+    color:rgba(255,255,255,.84);
+    margin-bottom:38px; max-width:420px;
+  }
+  .wa-btn {
+    display:inline-flex; align-items:center; gap:12px;
+    background:var(--WA); color:#fff;
+    padding:15px 28px; border-radius:50px;
+    font-family:inherit; font-weight:700; font-size:15px;
+    text-decoration:none; transition:all .25s;
+    box-shadow:0 6px 24px rgba(37,211,102,.38);
+    width:fit-content;
+  }
+  .wa-btn:hover { background:#1ebe5d; transform:translateY(-2px); box-shadow:0 10px 32px rgba(37,211,102,.5); }
+  .wa-icon { font-size:22px; }
+  .stars-row {
+    display:flex; align-items:center; gap:10px;
+    margin-top:28px; color:rgba(255,255,255,.65); font-size:12px; font-weight:600;
+  }
+  .stars { color:#ffd700; font-size:15px; letter-spacing:1px; }
+
+  .hero-right {
+    background:var(--off-white);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:60px 6%;
+    gap:20px;
+  }
+  .stat-row { display:flex; gap:18px; width:100%; justify-content:center; }
+  .stat-box {
+    background:var(--white);
+    border:2px solid transparent;
+    background-clip:padding-box;
+    border-radius:8px; padding:22px 18px; text-align:center; flex:1; min-width:100px;
+    position:relative;
+    box-shadow:0 2px 16px rgba(107,31,124,.1);
+  }
+  .stat-box::before {
+    content:''; position:absolute; inset:-2px;
+    background:var(--grad); border-radius:10px; z-index:-1;
+  }
+  .stat-num {
+    font-family:'Playfair Display',serif; font-size:42px; font-weight:900;
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; line-height:1;
+  }
+  .stat-lbl { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; color:var(--gray); margin-top:6px; }
+  .quote-box {
+    background:var(--white);
+    border-left:4px solid var(--knn2);
+    border-radius:0 8px 8px 0; padding:18px 20px;
+    font-size:13px; line-height:1.72; color:var(--dark);
+    font-style:italic; width:100%;
+    box-shadow:0 2px 12px rgba(107,31,124,.08);
+  }
+  .quote-box strong {
+    display:block; font-style:normal; font-size:11px;
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-top:10px; font-weight:700; letter-spacing:.5px;
+  }
+
+  /* ── SECTIONS ── */
+  section { padding:80px 6%; }
+  .inner { max-width:1100px; margin:0 auto; }
+  .tag {
+    display:inline-block;
+    background:var(--grad); color:#fff;
+    padding:4px 16px; border-radius:50px;
+    font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+    margin-bottom:16px;
+  }
+  .sec-title {
+    font-family:'Playfair Display',serif;
+    font-size:clamp(30px,3.8vw,46px); font-weight:900;
+    color:var(--dark); line-height:1.1; margin-bottom:12px;
+  }
+  .sec-title span {
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .sec-sub { font-size:15px; color:var(--gray); line-height:1.65; max-width:480px; }
+
+  /* ── BENEFITS ── */
+  .benefits-bg { background:var(--white); }
+  .benefits-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:1px; margin-top:48px;
+    background:#e8e0f0; border-radius:10px; overflow:hidden;
+    border:1px solid #e0d4ee;
+  }
+  .benefit-card {
+    background:var(--white); padding:32px 24px;
+    transition:background .25s;
+  }
+  .benefit-card:hover { background:var(--grad); }
+  .benefit-card:hover h3,
+  .benefit-card:hover p { color:#fff; }
+  .benefit-icon { font-size:34px; margin-bottom:14px; }
+  .benefit-card h3 { font-size:16px; font-weight:700; color:var(--dark); margin-bottom:8px; transition:color .25s; }
+  .benefit-card p { font-size:13px; color:var(--gray); line-height:1.65; transition:color .25s; }
+
+  /* ── IDIOMAS ── */
+  .idiomas-bg { background:var(--dark); }
+  .idiomas-bg .sec-sub { color:rgba(255,255,255,.5); }
+  .courses-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px; margin-top:48px;
+  }
+  .course-card {
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
+    border-radius:8px; padding:26px 20px;
+    display:flex; flex-direction:column; gap:10px;
+    transition:all .25s; cursor:default;
+  }
+  .course-card:hover { background:var(--grad); border-color:transparent; transform:translateY(-5px); box-shadow:0 12px 32px rgba(196,24,106,.35); }
+  .flag { font-size:40px; line-height:1; }
+  .course-card h3 { font-size:18px; font-weight:700; color:#fff; }
+  .course-card p { font-size:13px; color:rgba(255,255,255,.5); line-height:1.5; flex:1; }
+  .course-card:hover p { color:rgba(255,255,255,.8); }
+  .ctag {
+    display:inline-block; background:var(--grad); color:#fff;
+    padding:3px 12px; border-radius:50px; font-size:10px; font-weight:700;
+    letter-spacing:.8px; width:fit-content;
+  }
+  .course-card:hover .ctag { background:rgba(255,255,255,.25); }
+
+  /* ── MÉTODO ── */
+  .metodo-bg { background:var(--light); }
+  .steps-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px; margin-top:48px;
+  }
+  .step {
+    background:var(--white); border-radius:10px; padding:30px 22px;
+    border-top:4px solid transparent;
+    border-image:var(--grad) 1;
+    box-shadow:0 2px 16px rgba(107,31,124,.07);
+    position:relative;
+  }
+  .step-num {
+    font-family:'Playfair Display',serif;
+    font-size:50px; font-weight:900; line-height:1; margin-bottom:10px;
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; opacity:.35;
+  }
+  .step h3 { font-size:15px; font-weight:700; color:var(--dark); margin-bottom:8px; }
+  .step p { font-size:13px; color:var(--gray); line-height:1.6; }
+
+  /* ── DEPOIMENTOS ── */
+  .testi-bg { background:var(--grad); }
+  .testi-bg .sec-sub { color:rgba(255,255,255,.7); }
+  .testi-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:20px; margin-top:48px;
+  }
+  .testi-card { background:#fff; border-radius:10px; padding:28px 24px; }
+  .testi-stars {
+    font-size:16px; margin-bottom:14px;
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .testi-card blockquote { font-size:14px; line-height:1.7; color:var(--dark); margin-bottom:18px; font-style:italic; }
+  .testi-author { display:flex; align-items:center; gap:10px; }
+  .avatar {
+    width:38px; height:38px; border-radius:50%;
+    background:var(--grad);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; color:#fff; font-size:15px; flex-shrink:0;
+  }
+  .testi-author strong { font-size:13px; color:var(--dark); display:block; }
+  .testi-author span { font-size:11px; color:var(--gray); }
+
+  /* ── UNIDADE ── */
+  .unit-bg { background:var(--white); }
+  .unit-box {
+    display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start; margin-top:48px;
+  }
+  .unit-info { flex:1; min-width:260px; }
+  .info-row {
+    display:flex; align-items:flex-start; gap:14px;
+    padding:16px 0; border-bottom:1px solid #ede5f6;
+  }
+  .info-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
+  .info-label {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px;
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; margin-bottom:3px;
+  }
+  .info-value { font-size:14px; color:var(--dark); font-weight:500; line-height:1.5; }
+  .info-value a {
+    background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; text-decoration:none; font-weight:700;
+  }
+  .map-embed {
+    flex:1; min-width:280px; height:290px; border-radius:10px;
+    overflow:hidden; padding:3px;
+    background:var(--grad);
+  }
+  .map-embed iframe { width:100%; height:100%; border:none; border-radius:8px; display:block; }
+
+  /* ── CTA FINAL ── */
+  .cta-bg {
+    background:var(--dark);
+    text-align:center; padding:90px 6%;
+    position:relative; overflow:hidden;
+  }
+  .cta-bg::before {
+    content:'KNN';
+    font-family:'Playfair Display',serif; font-size:200px; font-weight:900;
+    color:rgba(255,255,255,.025); position:absolute;
+    top:50%; left:50%; transform:translate(-50%,-50%);
+    white-space:nowrap; pointer-events:none; line-height:1;
+  }
+  .cta-bg .sec-title { color:#fff; position:relative; }
+  .cta-bg p { color:rgba(255,255,255,.5); font-size:16px; max-width:480px; margin:14px auto 36px; position:relative; }
+  .wa-btn-lg {
+    display:inline-flex; align-items:center; gap:14px;
+    background:var(--WA); color:#fff;
+    padding:18px 40px; border-radius:50px;
+    font-family:inherit; font-weight:700; font-size:17px;
+    text-decoration:none; transition:all .25s;
+    box-shadow:0 8px 30px rgba(37,211,102,.4);
+    position:relative;
+  }
+  .wa-btn-lg:hover { background:#1ebe5d; transform:translateY(-2px); box-shadow:0 14px 40px rgba(37,211,102,.55); }
+  .wa-num { font-size:13px; opacity:.75; display:block; margin-top:2px; font-weight:400; }
+
+  /* ── FOOTER ── */
+  footer {
+    background:var(--grad);
+    color:rgba(255,255,255,.75);
+    text-align:center; padding:30px 6%;
+    font-size:13px;
+  }
+  footer a { color:#fff; text-decoration:none; opacity:.9; }
+  footer a:hover { opacity:1; text-decoration:underline; }
+
+  /* ── ANIM ── */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  .hero-left { animation:fadeUp .8s ease both; }
+  .hero-right { animation:fadeUp .9s ease .15s both; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px){
+    .hero { grid-template-columns:1fr; }
+    .hero-right { display:none; }
+    .nav-links { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <svg viewBox="0 0 160 52" xmlns="http://www.w3.org/2000/svg" aria-label="KNN Idiomas">
+      <defs>
+        <linearGradient id="knnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#6b1f7c"/>
+          <stop offset="52%" style="stop-color:#c4186a"/>
+          <stop offset="100%" style="stop-color:#e8203a"/>
+        </linearGradient>
+      </defs>
+      <text x="2" y="40" font-family="Arial Black,sans-serif" font-weight="900" font-size="42" fill="url(#knnGrad)">KNN</text>
+      <text x="4" y="51" font-family="Arial,sans-serif" font-weight="700" font-size="10" fill="#888" letter-spacing="4.5">IDIOMAS</text>
+    </svg>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#idiomas">Idiomas</a></li>
+    <li><a href="#metodo">Método</a></li>
+    <li><a href="#unidade">Unidade</a></li>
+    <li><a href="#contato">Contato</a></li>
+  </ul>
+  <a href="https://wa.me/5562960388482?text=Olá!%20Vim%20pelo%20site%20e%20quero%20saber%20mais%20sobre%20as%20aulas%20na%20KNN%20Goiânia%20Eldorado%202." target="_blank" class="nav-cta">💬 Falar no WhatsApp</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="badge">⭐ 4,9 no Google · 101 avaliações</div>
+    <h1>Aprenda inglês do jeito que o <em>brasileiro</em> entende</h1>
+    <p>Método desenvolvido para quem já pensa em português. Mais natural, mais rápido, mais você.</p>
+    <a href="https://wa.me/5562960388482?text=Olá!%20Quero%20agendar%20uma%20aula%20experimental%20gratuita%20na%20KNN%20Goiânia%20Eldorado%202." target="_blank" class="wa-btn">
+      <span class="wa-icon">💬</span>
+      Agendar aula experimental grátis
+    </a>
+    <div class="stars-row">
+      <span class="stars">★★★★★</span>
+      <span>Melhor avaliada em Goiânia Eldorado</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num">4,9</div><div class="stat-lbl">Google</div></div>
+      <div class="stat-box"><div class="stat-num">101+</div><div class="stat-lbl">Alunos</div></div>
+      <div class="stat-box"><div class="stat-num">5+</div><div class="stat-lbl">Idiomas</div></div>
+    </div>
+    <div class="quote-box">
+      "A escola é muito boa, ótimos profissionais, ótimos professores. Recomendo demais!"
+      <strong>— Aluna de Inglês · KNN Eldorado 2</strong>
+    </div>
+    <div class="quote-box">
+      "É um ótimo lugar para aprender e fazer novos amigos. O ambiente é super acolhedor."
+      <strong>— Aluno de Espanhol · KNN Eldorado 2</strong>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFÍCIOS -->
+<section class="benefits-bg">
+  <div class="inner">
+    <div class="tag">Por que a KNN?</div>
+    <h2 class="sec-title">Método feito para <span>brasileiros</span></h2>
+    <p class="sec-sub">Esqueça a tradução literal. Ensinamos como o cérebro de quem fala português realmente funciona.</p>
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="benefit-icon">🗣️</div>
+        <h3>Foco em Conversação</h3>
+        <p>Desde a primeira aula você já começa a falar. Zero decoreba, 100% prática real.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">🧠</div>
+        <h3>Método Adaptado</h3>
+        <p>Ensino estruturado para a mente de quem pensa em português — aprendizado 3× mais rápido.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">👩‍🏫</div>
+        <h3>Professores Excepcionais</h3>
+        <p>"Ótimos profissionais" — é o que nossos alunos dizem. Certificados e engajados.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="benefit-icon">📍</div>
+        <h3>Localização Conveniente</h3>
+        <p>No coração do Residencial Celina Park, com fácil acesso e estacionamento.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IDIOMAS -->
+<section class="idiomas-bg" id="idiomas">
+  <div class="inner">
+    <div class="tag">Nossos cursos</div>
+    <h2 class="sec-title" style="color:#fff">Escolha seu <span style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">idioma</span></h2>
+    <p class="sec-sub">Do básico ao avançado, temos a trilha certa para você.</p>
+    <div class="courses-grid">
+      <div class="course-card">
+        <div class="flag">🇺🇸</div>
+        <h3>Inglês</h3>
+        <p>O idioma mais demandado no mercado. Conversação, negócios e certificações.</p>
+        <span class="ctag">+ Popular</span>
+      </div>
+      <div class="course-card">
+        <div class="flag">🇪🇸</div>
+        <h3>Espanhol</h3>
+        <p>Mais próximo do português. Aprenda rápido e abra portas na América Latina.</p>
+        <span class="ctag">Fácil início</span>
+      </div>
+      <div class="course-card">
+        <div class="flag">🇫🇷</div>
+        <h3>Francês</h3>
+        <p>A língua da cultura, gastronomia e diplomacia. Elegância desde o primeiro dia.</p>
+        <span class="ctag">Cultura</span>
+      </div>
+      <div class="course-card">
+        <div class="flag">🇩🇪</div>
+        <h3>Alemão</h3>
+        <p>Porta de entrada para a Europa. Precisão e disciplina no aprendizado.</p>
+        <span class="ctag">Destaque</span>
+      </div>
+      <div class="course-card">
+        <div class="flag">🇮🇹</div>
+        <h3>Italiano</h3>
+        <p>Música, arte, moda e culinária. O idioma mais bonito do mundo te espera.</p>
+        <span class="ctag">Novo</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MÉTODO -->
+<section class="metodo-bg" id="metodo">
+  <div class="inner">
+    <div class="tag">Como funciona</div>
+    <h2 class="sec-title">Sua jornada até a <span>fluência</span></h2>
+    <p class="sec-sub">Um caminho estruturado, sem achismos, do zero à fluência real.</p>
+    <div class="steps-grid">
+      <div class="step"><div class="step-num">01</div><h3>Aula Experimental</h3><p>Venha sem compromisso. Conheça o método, a unidade e os professores — de graça.</p></div>
+      <div class="step"><div class="step-num">02</div><h3>Nível Personalizado</h3><p>Nivelamento rápido para você entrar direto no módulo certo.</p></div>
+      <div class="step"><div class="step-num">03</div><h3>Imersão Progressiva</h3><p>Aulas dinâmicas com foco em situações reais, não em gramática decorada.</p></div>
+      <div class="step"><div class="step-num">04</div><h3>Você Fala!</h3><p>Confiança para usar o idioma no trabalho, viagens e na vida.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section class="testi-bg">
+  <div class="inner">
+    <div class="tag" style="background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4)">Alunos KNN</div>
+    <h2 class="sec-title" style="color:#fff">O que dizem nossos <span style="-webkit-text-fill-color:#fff;color:#fff">alunos</span></h2>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"A escola é muito boa, ótimos profissionais, ótimos professores. Recomendo demais para quem quer aprender de verdade!"</blockquote>
+        <div class="testi-author"><div class="avatar">A</div><div><strong>Ana Paula</strong><span>Aluna de Inglês</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"É um ótimo lugar para aprender e fazer novos amigos. O ambiente é super acolhedor e os professores são incríveis."</blockquote>
+        <div class="testi-author"><div class="avatar">M</div><div><strong>Marcos Vinícius</strong><span>Aluno de Espanhol</span></div></div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <blockquote>"Gosto muito da KNN e do método de estudo. Em poucos meses já consegui me comunicar em inglês no trabalho."</blockquote>
+        <div class="testi-author"><div class="avatar">J</div><div><strong>Júlia Ferreira</strong><span>Aluna de Inglês</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- UNIDADE -->
+<section class="unit-bg" id="unidade">
+  <div class="inner">
+    <div class="tag">Onde nos encontrar</div>
+    <h2 class="sec-title">KNN Goiânia <span>Eldorado 2</span></h2>
+    <div class="unit-box">
+      <div class="unit-info">
+        <div class="info-row">
+          <span class="info-icon">📍</span>
+          <div>
+            <div class="info-label">Endereço</div>
+            <div class="info-value">R. CP 13, 458 – Quadra CP12 Lote 19<br>Res. Celina Park · Goiânia – GO, 74373-160</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">🕐</span>
+          <div>
+            <div class="info-label">Horário</div>
+            <div class="info-value">Aberto agora · Fecha às 21h00</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">⭐</span>
+          <div>
+            <div class="info-label">Avaliação Google</div>
+            <div class="info-value">4,9 estrelas · 101 avaliações</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">💬</span>
+          <div>
+            <div class="info-label">WhatsApp</div>
+            <div class="info-value"><a href="https://wa.me/5562960388482" target="_blank">+55 62 9603-8848</a></div>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">🌐</span>
+          <div>
+            <div class="info-label">Site</div>
+            <div class="info-value"><a href="https://www.knnidiomas.com.br" target="_blank">knnidiomas.com.br</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="map-embed">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3820.7!2d-49.3!3d-16.75!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x935ef7c420654ecd%3A0x509532eb35f62165!2sKNN%20Idiomas%20Goi%C3%A2nia%20Eldorado%202!5e0!3m2!1spt-BR!2sbr!4v1"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa KNN Eldorado 2">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-bg" id="contato">
+  <h2 class="sec-title" style="color:#fff">Pronto para <span style="-webkit-text-fill-color:transparent;background:var(--grad);-webkit-background-clip:text;background-clip:text;">falar inglês?</span></h2>
+  <p>Clique abaixo e fale diretamente com nossa equipe no WhatsApp. Sem formulário, sem espera.</p>
+  <a href="https://wa.me/5562960388482?text=Olá!%20Vim%20pelo%20site%20e%20quero%20agendar%20uma%20aula%20experimental%20gratuita%20na%20KNN%20Goiânia%20Eldorado%202." target="_blank" class="wa-btn-lg">
+    <span style="font-size:26px">💬</span>
+    <span>
+      Falar agora no WhatsApp
+      <span class="wa-num">+55 62 9603-8848</span>
+    </span>
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex;justify-content:center;margin-bottom:12px;">
+    <svg viewBox="0 0 160 52" xmlns="http://www.w3.org/2000/svg" style="height:48px;width:auto" aria-label="KNN Idiomas">
+      <defs>
+        <linearGradient id="knnGradF" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#e8c8f4"/>
+          <stop offset="52%" style="stop-color:#f5a0cc"/>
+          <stop offset="100%" style="stop-color:#ffb0b8"/>
+        </linearGradient>
+      </defs>
+      <text x="2" y="40" font-family="Arial Black,sans-serif" font-weight="900" font-size="42" fill="url(#knnGradF)">KNN</text>
+      <text x="4" y="51" font-family="Arial,sans-serif" font-weight="700" font-size="10" fill="rgba(255,255,255,0.6)" letter-spacing="4.5">IDIOMAS</text>
+    </svg>
+  </div>
+  <p>Goiânia Eldorado 2 · R. CP 13, 458 – Res. Celina Park</p>
+  <p style="margin-top:6px;">
+    <a href="https://wa.me/5562960388482" target="_blank">💬 +55 62 9603-8848</a>
+    &nbsp;·&nbsp;
+    <a href="https://www.knnidiomas.com.br" target="_blank">knnidiomas.com.br</a>
+    &nbsp;·&nbsp;
+    <a href="https://maps.google.com/?q=KNN+Idiomas+Goiania+Eldorado+2" target="_blank">Ver no Maps</a>
+  </p>
+  <p style="margin-top:12px; font-size:11px; opacity:.35;">© 2025 KNN Idiomas. Todos os direitos reservados.</p>
+</footer>
+
+</body>
+</html>
